@@ -39,31 +39,99 @@ Registeration Number :
 ```
 ### MainActivity.java
 ```java
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-    <uses-permission android:name="android.permission.BODY_SENSORS"/>
-    <application
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.ProximitySensorApp">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+package com.example.proximitysensorapp;
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
+import androidx.appcompat.app.AppCompatActivity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.widget.TextView;
 
-</manifest>
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
+
+    private SensorManager sensorManager;
+    private Sensor proximitySensor;
+    private TextView tvStatus, tvDistance, tvMaxRange, tvAvailable;
+    private boolean isSensorAvailable = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Initialize TextViews
+        tvStatus = findViewById(R.id.tvStatus);
+        tvDistance = findViewById(R.id.tvDistance);
+        tvMaxRange = findViewById(R.id.tvMaxRange);
+        tvAvailable = findViewById(R.id.tvAvailable);
+
+        // Get SensorManager
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        // Get Proximity Sensor
+        if (sensorManager != null) {
+            proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+
+            if (proximitySensor != null) {
+                isSensorAvailable = true;
+                tvAvailable.setText("Sensor: Available ✓");
+                tvMaxRange.setText("Max Range: " + proximitySensor.getMaximumRange() + " cm");
+            } else {
+                tvAvailable.setText("Sensor: Not Available ✗");
+                tvStatus.setText("NO SENSOR");
+                tvMaxRange.setText("Max Range: N/A");
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Register sensor listener
+        if (isSensorAvailable) {
+            sensorManager.registerListener(this, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Unregister sensor listener to save battery
+        if (isSensorAvailable) {
+            sensorManager.unregisterListener(this);
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
+            float distance = event.values[0];
+
+            // Update distance display
+            tvDistance.setText("Distance: " + distance + " cm");
+
+            // Check proximity status
+            if (distance < proximitySensor.getMaximumRange()) {
+                // Object is NEAR
+                tvStatus.setText("NEAR");
+                tvStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                // Change background color (optional - would need programmatic background change)
+            } else {
+                // Object is FAR
+                tvStatus.setText("FAR");
+                tvStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // Handle accuracy changes if needed
+    }
+}
 ```
 ### activity_main.xml
 ```xml
