@@ -29,8 +29,8 @@ Step 7: Save and run the application.
 ```
 /*
 Program to print the process of proximitysensor in android mobile devices”.
-Developed by:
-Registeration Number :
+Developed by:shalini venkatesulu
+Registeration Number :212223220104
 */
 ```
 ### AndroidManifest.xml
